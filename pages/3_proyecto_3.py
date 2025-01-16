@@ -11,11 +11,15 @@ import plotly.graph_objects as go
 from mpl_toolkits.mplot3d import Axes3D
 from io import StringIO
 
+# Set style for all plots
+plt.style.use('seaborn')
+sns.set_theme()
+
 # Page configuration
-st.set_page_config(page_title="Customer Segmentation Analysis", layout="wide")
+st.set_page_config(page_title="Proyecto 3: Customer Segmentation Analysis", layout="wide")
 
 # Title and description
-st.title("Customer Segmentation Analysis")
+st.title("Proyecto 3: Customer Segmentation Analysis")
 st.markdown("""
 ### Description:
 This application performs customer segmentation using K-means clustering based on customer purchasing behavior.
@@ -38,6 +42,38 @@ def load_data():
         st.error("Please ensure the data file is in the correct location")
         return None
 
+# Function to create distribution plots
+def create_distribution_plots(data):
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    
+    sns.histplot(data=data, x='Age', bins=20, ax=axes[0])
+    axes[0].set_title('Age Distribution')
+    
+    sns.histplot(data=data, x='Annual Income (k$)', bins=20, ax=axes[1])
+    axes[1].set_title('Income Distribution')
+    
+    sns.histplot(data=data, x='Spending Score (1-100)', bins=20, ax=axes[2])
+    axes[2].set_title('Spending Score Distribution')
+    
+    plt.tight_layout()
+    return fig
+
+# Function to create gender analysis plots
+def create_gender_plots(data):
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+    
+    sns.boxplot(data=data, x='Gender', y='Age', ax=axes[0])
+    axes[0].set_title('Age by Gender')
+    
+    sns.boxplot(data=data, x='Gender', y='Annual Income (k$)', ax=axes[1])
+    axes[1].set_title('Income by Gender')
+    
+    sns.boxplot(data=data, x='Gender', y='Spending Score (1-100)', ax=axes[2])
+    axes[2].set_title('Spending Score by Gender')
+    
+    plt.tight_layout()
+    return fig
+
 # Load the data
 data = load_data()
 
@@ -50,55 +86,25 @@ if data is not None:
         st.write("First few rows of the dataset:")
         st.dataframe(data.head())
         
-        col1, col2 = st.columns(2)
-        with col1:
-            st.write("Data Description:")
-            st.dataframe(data.describe())
-        with col2:
-            st.write("Data Info:")
-            buffer = StringIO()
-            data.info(buf=buffer)
-            st.text(buffer.getvalue())
+        st.write("Data Description:")
+        st.dataframe(data.describe())
+
+        st.write("Data Info:")
+        buffer = StringIO()
+        data.info(buf=buffer)
+        st.text(buffer.getvalue())
 
     with tab2:
         st.header("Exploratory Data Analysis")
         
-        # Distribution plots
+        # Distribution plots using the new function
         st.subheader("Distribution of Key Features")
-        fig1 = plt.figure(figsize=(15, 5))
-        
-        plt.subplot(1, 3, 1)
-        sns.histplot(data=data, x='Age', bins=20)
-        plt.title('Age Distribution')
-        
-        plt.subplot(1, 3, 2)
-        sns.histplot(data=data, x='Annual Income (k$)', bins=20)
-        plt.title('Income Distribution')
-        
-        plt.subplot(1, 3, 3)
-        sns.histplot(data=data, x='Spending Score (1-100)', bins=20)
-        plt.title('Spending Score Distribution')
-        
-        plt.tight_layout()
+        fig1 = create_distribution_plots(data)
         st.pyplot(fig1)
         
-        # Gender analysis
+        # Gender analysis using the new function
         st.subheader("Analysis by Gender")
-        fig2 = plt.figure(figsize=(15, 5))
-        
-        plt.subplot(1, 3, 1)
-        sns.boxplot(data=data, x='Gender', y='Age')
-        plt.title('Age by Gender')
-        
-        plt.subplot(1, 3, 2)
-        sns.boxplot(data=data, x='Gender', y='Annual Income (k$)')
-        plt.title('Income by Gender')
-        
-        plt.subplot(1, 3, 3)
-        sns.boxplot(data=data, x='Gender', y='Spending Score (1-100)')
-        plt.title('Spending Score by Gender')
-        
-        plt.tight_layout()
+        fig2 = create_gender_plots(data)
         st.pyplot(fig2)
 
     with tab3:
@@ -121,11 +127,11 @@ if data is not None:
                 kmeans.fit(X_scaled)
                 inertias.append(kmeans.inertia_)
             
-            fig3 = plt.figure(figsize=(10, 6))
-            plt.plot(K, inertias, 'bx-')
-            plt.xlabel('k')
-            plt.ylabel('Inertia')
-            plt.title('Elbow Method for Optimal k')
+            fig3, ax3 = plt.subplots(figsize=(10, 6))
+            ax3.plot(K, inertias, 'bx-')
+            ax3.set_xlabel('k')
+            ax3.set_ylabel('Inertia')
+            ax3.set_title('Elbow Method for Optimal k')
             st.pyplot(fig3)
         
         with col2:
@@ -137,11 +143,11 @@ if data is not None:
                 score = silhouette_score(X_scaled, kmeans.labels_)
                 silhouette_scores.append(score)
             
-            fig4 = plt.figure(figsize=(10, 6))
-            plt.plot(range(2, 11), silhouette_scores, 'rx-')
-            plt.xlabel('k')
-            plt.ylabel('Silhouette Score')
-            plt.title('Silhouette Analysis')
+            fig4, ax4 = plt.subplots(figsize=(10, 6))
+            ax4.plot(range(2, 11), silhouette_scores, 'rx-')
+            ax4.set_xlabel('k')
+            ax4.set_ylabel('Silhouette Score')
+            ax4.set_title('Silhouette Analysis')
             st.pyplot(fig4)
         
         # Perform clustering with optimal k=5
@@ -150,12 +156,12 @@ if data is not None:
         
         # Visualize clusters
         st.subheader("Customer Segments")
-        fig5 = plt.figure(figsize=(12, 8))
-        scatter = plt.scatter(data['Annual Income (k$)'], data['Spending Score (1-100)'],
+        fig5, ax5 = plt.subplots(figsize=(12, 8))
+        scatter = ax5.scatter(data['Annual Income (k$)'], data['Spending Score (1-100)'],
                             c=clusters, cmap='viridis')
-        plt.xlabel('Annual Income (k$)')
-        plt.ylabel('Spending Score (1-100)')
-        plt.title('Customer Segments')
+        ax5.set_xlabel('Annual Income (k$)')
+        ax5.set_ylabel('Spending Score (1-100)')
+        ax5.set_title('Customer Segments')
         plt.colorbar(scatter)
         st.pyplot(fig5)
 
@@ -199,19 +205,16 @@ if data is not None:
         
         # Visualization of cluster characteristics
         st.subheader("Cluster Characteristics")
-        fig7 = plt.figure(figsize=(15, 5))
+        fig7, axes = plt.subplots(1, 3, figsize=(15, 5))
         
-        plt.subplot(1, 3, 1)
-        sns.boxplot(data=data, x='Cluster', y='Age')
-        plt.title('Age Distribution by Cluster')
+        sns.boxplot(data=data, x='Cluster', y='Age', ax=axes[0])
+        axes[0].set_title('Age Distribution by Cluster')
         
-        plt.subplot(1, 3, 2)
-        sns.boxplot(data=data, x='Cluster', y='Annual Income (k$)')
-        plt.title('Income Distribution by Cluster')
+        sns.boxplot(data=data, x='Cluster', y='Annual Income (k$)', ax=axes[1])
+        axes[1].set_title('Income Distribution by Cluster')
         
-        plt.subplot(1, 3, 3)
-        sns.boxplot(data=data, x='Cluster', y='Spending Score (1-100)')
-        plt.title('Spending Score Distribution by Cluster')
+        sns.boxplot(data=data, x='Cluster', y='Spending Score (1-100)', ax=axes[2])
+        axes[2].set_title('Spending Score Distribution by Cluster')
         
         plt.tight_layout()
         st.pyplot(fig7)
